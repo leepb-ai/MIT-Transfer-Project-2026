@@ -36,3 +36,7 @@ Usually programming concepts are based on "If-Then" statements. But by using vec
 
 ##Acknowledgements & Tools:
 I developed this project as part of a 10-week intensive study of DCIT (Computer science) and MATH courses. I used Claude (Anthropic) as a pair-programming partner to help implement the Python class structures and database connectivity, allowing me to focus the research on applying Vector Geometry and Set Theory to healthcare triage.
+
+## What I plan to do next: 
+Focus on fixing the shortcomings of my current system.
+I also plan to integrate an offline component to the system
