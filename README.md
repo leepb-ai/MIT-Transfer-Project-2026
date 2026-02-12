@@ -5,8 +5,8 @@ A documentation of my journey to MIT
 # HealthComm: Vector-Based Triage & Communication System
 
 ## Project Overview
-HealthComm is a healthcare communication platform aimed at removing communication issues in low-connectivity environments.
-This repository is focused on treating patient cases as high-dimensional vectors to make it easier and more efficient to assign patients to doctors and classify their cases based on urgency.
+HealthComm is a healthcare communication system I'm designing aimed at bridging communication gap between medical personnel and solving issues in low-connectivity environments.
+This repository describes my journey as I build this system using mathematical concepts I'm studying.
 
 ## The Mathematical Model (MATH 121; Algebra and Trigonometry & MATH 123; Vectors and Geometry)
 I represented patient cases as a vector in 5 dimensions
