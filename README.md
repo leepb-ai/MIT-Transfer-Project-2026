@@ -5,7 +5,8 @@ A documentation of my journey to MIT
 # HealthComm: Vector-Based Triage & Communication System
 
 ## Project Overview
-HealthComm is a healthcare communication system I'm designing aimed at bridging communication gap between medical personnel and solving issues in low-connectivity environments.
+HealthComm is a healthcare communication system with leverages Artificial Intelligence, aimed at bridging communication gap between medical personnel and solving issues in low-connectivity environments.
+It will be linked to the hospital's system through a Middleware which will be handled mostly by AI. I'm doing this to ensure privacy and security of the hospital's data and make translation between HealthComm  and the hospital's system.
 This repository describes my journey as I build this system using mathematical concepts I'm studying.
 
 ## The Mathematical Model (MATH 121; Algebra and Trigonometry & MATH 123; Vectors and Geometry)
@@ -35,8 +36,13 @@ $$\vec{P} = (x_1, x_2, x_3, x_4, x_5)$$
 Usually programming concepts are based on "If-Then" statements. But by using vectors, calculating **Cosine Similarity** between cases to identify clusters of health crises in real-time and automate resource allocation can be done with mathematical precision.
 
 ##Acknowledgements & Tools:
-I developed this project as part of a 10-week intensive study of DCIT (Computer science) and MATH courses. I used Claude (Anthropic) as a pair-programming partner to help implement the Python class structures and database connectivity, allowing me to focus the research on applying Vector Geometry and Set Theory to healthcare triage.
+I developed this project as part of a 10-week intensive study of DCIT (Computer science) and MATH courses. I use Claude (Anthropic) and Google's Gemini as pair-programming partners to help implement the Python class structures and database connectivity, allowing me to focus the research on applying Vector Geometry and Set Theory to healthcare triage.
 
-## What I plan to do next: 
-Focus on fixing the shortcomings of my current system.
-I also plan to integrate an offline component to the system
+## What I plan to do: 
+Focus on identifying fixing the shortcomings of my current system and learning along the line.
+I also plan to integrate an offline component to the system(might take a bit)
+
+##Motivation:
+Making mistakes and discovering new efficient and faster solutions to them is really exciting. It makes me understand that there's always a way to make a system better.
+Most exciting of all is knowing that the stuff I learn from my books can actually be implemented to form the base of such a practical project.
+Looking forwad to consistently improve and be able to solve real world challenges!
