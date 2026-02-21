@@ -39,8 +39,7 @@ Usually programming concepts are based on "If-Then" statements. But by using vec
 I developed this project as part of a 10-week intensive study of DCIT (Computer science) and MATH courses. I use Claude (Anthropic) and Google's Gemini as pair-programming partners to help implement the Python class structures and database connectivity, allowing me to focus the research on applying Vector Geometry and Set Theory to healthcare triage.
 
 ## What I plan to do: 
-Focus on identifying fixing the shortcomings of my current system and learning along the line.
-I also plan to integrate an offline component to the system(might take a bit)
+Build a workflow system that manages medical staff schedules, determines and alerts appropriate staff of patient emergencies based on patient dat and also manage appointments.
 
 ##Motivation:
 Making mistakes and discovering new efficient and faster solutions to them is really exciting. It makes me understand that there's always a way to make a system better.
