@@ -1,34 +1,43 @@
-docs: initialize design documentation
+Technical Overview: Medical Case Vectorization & Logic Architecture
+1. The Patient Case Vector Manager
 
-The idea behind patient_case_vecor_manager.py;
-It handles patient prioritization using a 5-dimensional vector space, and this idea stemmed from the concept vectors.
+Functionality:
+The Vector Manager acts as the Data Persistence Layer. It interfaces with a PostgreSQL database to retrieve raw patient data and transform it into an 8-Dimensional Vector (R8).
 
-By representing a variable patient_case as a vector, the various cases which would indicate/'propose' a patient's case is to be deemed urgent and the it's level of urgency are assigned dimensions of the patient_case_vector, in this case 5 dimensions(x1-urgency score,x2-specialty code,x3-time intensity,x4-stability trend,x5-distance).
+Vector Composition:
 
-By definition:
+    x0​: Urgency Score (Normalized 0.0–1.0)
 
-x1: has an integer scale 1-10 
-#the scale here allows the urgency to provide a sizeable range to allow levels of urgency to be properly quantified.
+    x1​…x4​: One-Hot Encoded Specialty (Cardiology, Pediatrics, Neurology, Orthopedics)
 
-x2: it is an integer representation of different specialties(1-cardiology,2-pediatrics,3-ER,4-dental)
-#by assigning the specialty codes to specific integers, severity can be computed as actual figures
+    x5​: Time Intensity (Normalized 0.0–1.0)
 
-x3: simply the hours of care required 
-#the greater the value, the more severe the case
+    x6​: Clinical Stability (Normalized 0.0–1.0)
 
-x4: this represents the rate of change: where a negative value depicts improving condition and a positive value worsening condition
-#this is calculated from the rate of change of vitals in a certain time
+    x7​: Physical Distance (Normalized 0.0–1.0)
 
-x5: it represents the distance in kilometers from the hospital
+Engineering Trade-offs:
 
-The urgency is calculated then by finding the magnitude of the 5-dimensional vector(based on the Euclidean Norm)
+    One-Hot Encoding vs. Categorical Strings: I chose One-Hot encoding to allow for future integration with Machine Learning models (which require numerical input) and to enable fast bitwise operations, at the cost of slightly higher database storage.
 
+    Normalization [0, 1]: All dimensions are scaled to a unit range to prevent the "Distance" variable from mathematically outweighing the "Stability" variable during calculation.
 
-#Thoughts
-I do realise that there is an issue concerning the accuracy of the urgency.
-Especially with regards to x2(Specialty code); per the logic behind it, the system considers ER for instance, which is assigned an integer of 3 to be greater, in terms of importance, than cardiology.
-There are also other factors that need refining.
-Which is not valid..I'm going to think of a way to correct that error soon.
+2. The Clinical Logic Bridge
 
+Concept:
+The Bridge is an Abstraction Layer based on the Adapter Pattern. It serves as the "translator" between the mathematical world of vectors and the semantic world of clinical medicine.
 
+Mechanism:
+The Bridge "unpacks" the 8D vector. It performs Invariant Validation (ensuring the vector is mathematically sound) and then maps the numerical values to Logical Flags.
 
+    Example: It converts a stability float of 0.15 into a boolean is_unstable = True.
+
+Why the Bridge exists:
+To achieve Decoupling. By using a Bridge, the Clinical Logic Engine never touches the Database or the Raw Vector. This allows us to change the Database schema or the Vector dimensions without breaking the "Medical Brain" of the app.
+3. The Clinical Logic Engine (CLE)
+
+Functionality:
+The CLE is the Decision Layer. It ingests the "Human-Readable" dictionary provided by the Bridge and applies a Weighted Priority Algorithm to determine patient outcomes.
+
+Design Strategy:
+The engine is designed to be Deterministic. For any given set of clinical flags, the output will be consistent, ensuring medical reliability and "Explainable AI" (XAI) standards.
