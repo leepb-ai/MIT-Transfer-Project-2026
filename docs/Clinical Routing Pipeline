@@ -1,0 +1,154 @@
+# HealthComm — Clinical Routing Pipeline
+
+A modular Python pipeline that takes raw vector matches from a Vector Manager and transforms them into structured, auditable clinical routing decisions. The system is designed around a strict separation of concerns: each file owns exactly one responsibility, and data flows in one direction.
+
+---
+
+## Architecture Overview
+
+```
+VectorManager
+     │
+     ▼
+ LogicBridge          ← transforms raw vectors into typed DTOs
+     │
+     ▼
+ClinicalCaseDTO       ← typed contract carrying clinical signals + quality flags
+     │
+     ▼
+ ActionRouter         ← reads the DTO and assigns a routing priority
+     │
+     ▼
+ ClinicalPipeline     ← orchestrates the full sequence as a single call
+```
+
+All shared thresholds live in `config.py` — a zero-import leaf-node file that every other module reads from.
+
+---
+
+## File Reference
+
+### `config.py` — Shared Configuration
+
+Defines `ClinicalConfig`, a frozen dataclass holding all threshold constants. `frozen=True` prevents any threshold from being mutated at runtime, which matters in a clinical context where a mid-execution change could silently alter a routing decision.
+
+Two confidence thresholds exist intentionally:
+
+| Constant | Default | Purpose |
+|---|---|---|
+| `BRIDGE_MIN_CONFIDENCE` | `0.3` | Below this, the DTO is flagged `low_confidence=True`. The case still passes through — it is never discarded. |
+| `ROUTER_MIN_CONFIDENCE` | `0.5` | Below this, the router assigns GRAY regardless of all other signals. Stricter bar because acting on a case carries more risk than flagging one. |
+| `URGENCY_THRESHOLD` | `8.0` | `urgency_score >= 8.0` sets `is_critical=True` on the DTO. |
+| `TRANSPORT_KM_THRESHOLD` | `50.0` | `distance_km > 50.0` sets `requires_immediate_transport=True`. |
+
+---
+
+### `logic_bridge.py` — Logic Bridge
+
+The bridge sits between the Vector Manager and the rest of the pipeline. Its job is to safely fetch a vector object, normalise its raw fields, and produce a well-typed `ClinicalCaseDTO`. It never makes routing decisions.
+
+**Key operations:**
+
+- **Fetch** — calls `vector_manager.get_case_vector(case_id)`. Logs an error and returns `None` if the vector is not found.
+- **Specialty normalisation** — maps raw abbreviations (`"CARDIO"`, `"NEURO"`, etc.) to canonical Clinical DB values via `SPECIALTY_MAP`. If a value cannot be mapped, the case defaults to `GENERAL_PRACTICE` and `unknown_specialty=True` is set on the DTO.
+- **Evidence normalisation** — strips whitespace from `text_content` and truncates at 500 characters. Returns the sentinel string `"No evidence available"` for empty or missing content.
+- **Confidence flagging** — if `similarity < BRIDGE_MIN_CONFIDENCE`, sets `low_confidence=True`. The case is not dropped.
+- **Manual flag pass-through** — `prepare_for_logic_engine(case_id, manual_flag)` accepts an explicit `manual_flag` boolean from the caller. There is no default — the caller must evaluate and set this.
+- **Audit notifications** — after mapping, `_audit_flags()` logs and optionally calls an injected `error_notifier(case_id, message)` for any quality flags set on the DTO.
+
+---
+
+### `dto.py` — Clinical Case Data Transfer Object
+
+`ClinicalCaseDTO` is the typed contract that crosses every layer boundary. It carries both clinical signals and data-quality flags, and exposes three predicates that encode shared logic in one place so consumers never need to replicate it.
+
+**Fields:**
+
+| Field | Type | Set by | Meaning |
+|---|---|---|---|
+| `case_id` | `int` | Bridge | Unique case identifier |
+| `specialty` | `str` | Bridge | Canonical specialty or `GENERAL_PRACTICE` |
+| `is_critical` | `bool` | Bridge | `urgency_score >= URGENCY_THRESHOLD` |
+| `requires_immediate_transport` | `bool` | Bridge | `distance_km > TRANSPORT_KM_THRESHOLD` |
+| `evidence_text` | `str` | Bridge | Normalised clinical snippet, max 500 chars |
+| `manual_review_required` | `bool` | Caller | Required field — no default. Forces GRAY routing when `True`. |
+| `confidence_score` | `float` | Bridge | Raw similarity score from the vector |
+| `low_confidence` | `bool` | Bridge | `True` when `confidence_score < BRIDGE_MIN_CONFIDENCE` |
+| `unknown_specialty` | `bool` | Bridge | `True` when raw specialty could not be mapped |
+
+**Predicates:**
+
+- `is_actionable()` — `True` when the case is critical or requires immediate transport. The single definition of "worth routing."
+- `requires_human_review()` — `True` when a case is actionable and carries any quality flag (`low_confidence`, `unknown_specialty`, or `manual_review_required`). Used by audit tools and the router without needing to check individual flags.
+- `has_evidence()` — `False` when `evidence_text` carries the sentinel value. Used by the router to trigger a no-evidence notification without coupling the routing decision to evidence quality.
+
+---
+
+### `action_router.py` — Action Router
+
+The router reads a `ClinicalCaseDTO` and assigns one of four `RoutePriority` values. It then dispatches the case to the appropriate protocol via `execute_route()`. These two methods are intentionally separate — callers that only need the priority (e.g. for display or audit) can call `determine_route()` without triggering any side effects.
+
+**Priority levels:**
+
+| Priority | Condition | Meaning |
+|---|---|---|
+| `GRAY` | `manual_review_required`, or `confidence_score < ROUTER_MIN_CONFIDENCE`, or `unknown_specialty` | Human must review before any automated action |
+| `RED` | `is_critical` or `requires_immediate_transport` | Emergency protocol triggered |
+| `YELLOW` | `specialty != GENERAL_PRACTICE` and not critical | Specialist notification queued |
+| `GREEN` | Default | Standard review scheduled |
+
+**Routing is evaluated in that order.** GRAY is always checked first. A case that passes all three safety checks then proceeds to RED, YELLOW, or GREEN.
+
+Quality flags that do not change the route (`low_confidence` after the GRAY gate, missing evidence) trigger a warning notification via the injected `notifier` callable rather than altering the routing decision.
+
+---
+
+### `pipeline.py` — Clinical Pipeline
+
+`ClinicalPipeline` is the top-level orchestrator. It wires `LogicBridge` and `ActionRouter` together and exposes a single `process(case_id, manual_flag)` entry point. Application code never interacts with the bridge or router directly.
+
+```python
+config   = ClinicalConfig()
+pipeline = ClinicalPipeline(vector_manager, clinical_db, config)
+result   = pipeline.process(case_id=101, manual_flag=False)
+```
+
+`process()` returns a `PipelineResult` dataclass containing the DTO, the assigned priority, and two helpers:
+
+- `was_routed()` — `False` if the case was held in GRAY.
+- `summary()` — a single audit log line covering specialty, priority, criticality flags, and any quality warnings.
+
+Returns `None` if the vector could not be fetched, with the failure already logged at `ERROR` level by the bridge.
+
+---
+
+## How the Files Connect to the Vector Manager
+
+The Vector Manager is the only external dependency in the pipeline. It is injected into `LogicBridge` at construction and never touched by any other layer. The bridge calls `vector_manager.get_case_vector(case_id)` and translates whatever comes back into a `ClinicalCaseDTO` — isolating the rest of the pipeline from the Vector Manager's internal structure entirely.
+
+This means the Vector Manager can change its data model, add fields, or be swapped for a different implementation without any modification to the router, the DTO, or the pipeline. The bridge is the only file that needs to be updated.
+
+---
+
+## Running the Prototype
+
+```bash
+python main.py
+```
+
+`main.py` runs a set of integration tests against a `MockVectorManager` covering the RED, GRAY, and GREEN paths, unknown specialty handling, missing evidence, and the vector-not-found case. No live Clinical DB or Vector Manager is required.
+
+---
+
+## File Structure
+
+```
+healthcomm/
+├── config.py          # Shared thresholds — zero imports
+├── models/
+│   └── dto.py         # ClinicalCaseDTO — typed contract
+├── logic_bridge.py    # Bridge layer — vector → DTO
+├── action_router.py   # Logic engine — DTO → routing decision
+├── pipeline.py        # Orchestrator — single entry point
+└── main.py            # Prototype test harness
+```
