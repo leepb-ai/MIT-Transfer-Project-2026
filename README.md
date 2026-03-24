@@ -33,7 +33,16 @@ To ensure HealthComm remains functional in the most restrictive network environm
 1. Natural Language Processing (NLP) Layer
 Currently, the system relies on structured inputs to build patient vectors. I am implementing an NLP Middleware that will parse unstructured clinical notes into our 5D vector space. This ensures that medical staff can input data naturally while the system maintains mathematical precision for triage.
 
-2. Optimized Binary Transmission (Protobuf/Custom Bit-Packing)
+```mermaid
+graph TD;
+    A[Unstructured Clinical Notes] -->|NLP Layer| B(Vector Mapping);
+    B --> C{Priority Algorithm};
+    C -->|High Urgency| D[Satellite/Binary Packet];
+    C -->|Low Urgency| E[Local DB Storage];
+    D -->|80% Compression| F[Medical Staff Alert];
+```
+
+3. Optimized Binary Transmission (Protobuf/Custom Bit-Packing)
 Standard JSON is verbose and carries significant overhead, which is a bottleneck in low-connectivity areas. I am transitioning the data transmission protocol from standard string-based JSON to a Custom Binary Format.
 
 Why? By packing data into bit-fields and using protocol buffers, we can reduce packet size by up to 80%.
@@ -46,14 +55,6 @@ Making mistakes and discovering new efficient and faster solutions to them is re
 Most exciting of all is knowing that the stuff I learn from my books can actually be implemented to form the base of such a practical project.
 Looking forwad to consistently improve and be able to solve real world challenges!
 
-```mermaid
-graph TD;
-    A[Unstructured Clinical Notes] -->|NLP Layer| B(Vector Mapping);
-    B --> C{Priority Algorithm};
-    C -->|High Urgency| D[Satellite/Binary Packet];
-    C -->|Low Urgency| E[Local DB Storage];
-    D -->|80% Compression| F[Medical Staff Alert];
-```
 
 
 
