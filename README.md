@@ -47,5 +47,13 @@ Most exciting of all is knowing that the stuff I learn from my books can actuall
 Looking forwad to consistently improve and be able to solve real world challenges!
 
 
+graph TD
+    A[Unstructured Clinical Notes] -->|NLP Layer| B(Vector Mapping)
+    B --> C{Priority Algorithm}
+    C -->|High Urgency| D[Satellite/Binary Packet]
+    C -->|Low Urgency| E[Local DB Storage]
+    D -->|80% Compression| F[Medical Staff Alert]
+
+
 
 
