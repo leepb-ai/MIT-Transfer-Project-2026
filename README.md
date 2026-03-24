@@ -25,8 +25,25 @@ I developed this project as part of a 10-week intensive study of DCIT (Computer 
 ## What I plan to do: 
 Build a workflow system that manages medical staff schedules, determines and alerts appropriate staff of patient emergencies based on patient data and also manage appointments.
 
+🚀 Future Engineering: Beyond JSON & Text
+To ensure HealthComm remains functional in the most restrictive network environments (Edge/Low-Bandwidth), the next phase of development focuses on two critical infrastructure upgrades:
+
+1. Natural Language Processing (NLP) Layer
+Currently, the system relies on structured inputs to build patient vectors. I am implementing an NLP Middleware that will parse unstructured clinical notes into our 5D vector space. This ensures that medical staff can input data naturally while the system maintains mathematical precision for triage.
+
+2. Optimized Binary Transmission (Protobuf/Custom Bit-Packing)
+Standard JSON is verbose and carries significant overhead, which is a bottleneck in low-connectivity areas. I am transitioning the data transmission protocol from standard string-based JSON to a Custom Binary Format.
+
+Why? By packing data into bit-fields and using protocol buffers, we can reduce packet size by up to 80%.
+
+Impact: This allows critical triage vectors to be transmitted over extremely weak signals (e.g., 2G or SMS-based protocols) where standard web requests would fail.
+
+
 ##Motivation:
 Making mistakes and discovering new efficient and faster solutions to them is really exciting. It makes me understand that there's always a way to make a system better.
 Most exciting of all is knowing that the stuff I learn from my books can actually be implemented to form the base of such a practical project.
 Looking forwad to consistently improve and be able to solve real world challenges!
+
+
+
 
