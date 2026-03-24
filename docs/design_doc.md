@@ -34,6 +34,7 @@ The Bridge "unpacks" the 8D vector. It performs Invariant Validation (ensuring t
 
 Why the Bridge exists:
 To achieve Decoupling. By using a Bridge, the Clinical Logic Engine never touches the Database or the Raw Vector. This allows us to change the Database schema or the Vector dimensions without breaking the "Medical Brain" of the app.
+
 3. The Clinical Logic Engine (CLE)
 
 Functionality:
