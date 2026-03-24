@@ -1,4 +1,4 @@
-CREATE TABLE patient_cases (mock version)
+CREATE TABLE patient_cases --(mock version)
     -- 1. Identity Layer: Unique ID for every case
     case_id SERIAL PRIMARY KEY, -- Automatically increments (1, 2, 3...)
     patient_id INT NOT NULL,    -- Links to a patient table
