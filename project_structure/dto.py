@@ -1,5 +1,5 @@
 # healthcomm/models/dto.py
-#
+# Data Transfer Object(dto)
 # Typed contract that crosses every layer boundary in the healthcomm pipeline.
 # No business logic lives here beyond predicates that describe the DTO's own state.
 
