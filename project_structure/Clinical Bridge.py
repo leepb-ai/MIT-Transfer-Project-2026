@@ -13,7 +13,7 @@ class ClinicalCaseDTO:
 
 class LogicBridge:
     def __init__(self, priority_manager):
-        # Your PatientPriorityManager contains the queue and scaler
+        #PatientPriorityManager contains the queue and scaler
         self.pm = priority_manager
 
     def prepare_for_logic_engine(self, patient_obj) -> ClinicalCaseDTO:
