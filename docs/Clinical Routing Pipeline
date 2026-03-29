@@ -7,7 +7,7 @@ A modular Python pipeline that takes raw vector matches from a Vector Manager an
 ## Architecture Overview
 
 ```
-VectorManager
+VectorManager(hybrid priority manager)
      │
      ▼
  LogicBridge          ← transforms raw vectors into typed DTOs
