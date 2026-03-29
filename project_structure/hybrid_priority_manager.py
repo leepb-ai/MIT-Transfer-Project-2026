@@ -17,6 +17,8 @@ from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from dto import ClinicalCaseDTO
+
 # Database dependency check for portability
 try:
     import psycopg2
@@ -204,5 +206,30 @@ class PatientPriorityManager:
         self.db_config = db_config
         self.scaler = VectorScaler()
         self.queue = BufferedPriorityQueue()
+    # ... existing init and queue logic ...
+
+    def _bridge_to_clinical_logic(self, patient: Patient) -> ClinicalCaseDTO:
+        """
+        The Translation Layer: Converts R4 math into the DTO contract.
+        """
+        # 1. Extract dimensions from the patient vector
+        urgency_val = patient.vector[0]
+        distance_val = patient.vector[3]
+        
+        # 2. Apply business rules to set DTO flags
+        is_crit = patient.priority_score >= 0.85
+        needs_transport = distance_val > 7.0
+        
+        # 3. Instantiate the Contract (The DTO)
+        return ClinicalCaseDTO(
+            case_id=patient.case_id,
+            specialty=patient.specialty,
+            manual_review_required=False, # Default unless vector is anomalous
+            is_critical=is_crit,
+            requires_immediate_transport=needs_transport,
+            evidence_text=patient.chief_complaint or "No evidence available",
+            confidence_score=patient.priority_score,
+            low_confidence=(patient.priority_score < 0.4)
+        )
     
-    # ... (Database methods remain consistent with your logic bridge design)
+    # ... (Database methods remain consistent with logic bridge design)
